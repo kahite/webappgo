@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"log"
     "io/ioutil"
@@ -53,14 +52,16 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
-	pageTitle := r.URL.Path[len("/save/"):]
-	p, _ := loadPage(pageTitle)
-	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+    pageTitle := r.URL.Path[len("/save/"):]
+    body := r.FormValue("body")
+    p := &Page{Title: pageTitle, Body: []byte(body)}
+    p.save()
+    http.Redirect(w, r, "/view/" + pageTitle, http.StatusFound)
 }
 
 func main() {
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
-	http.HandleFunc("/save/", editHandler)
+	http.HandleFunc("/save/", saveHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -28,10 +28,19 @@ func loadPage(title string) (*Page, error) {
     return &Page{Title: title, Body: body}, nil
 }
 
+func renderTemplate(filename string, w http.ResponseWriter, p *Page) {
+    t, _ := template.ParseFiles(filename + ".html")
+    t.Execute(w, p)
+}
+
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	pageTitle := r.URL.Path[len("/view/"):]
-	p, _ := loadPage(pageTitle)
-	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+    pageTitle := r.URL.Path[len("/view/"):]
+    p, err := loadPage(pageTitle)
+    if err != nil {
+        http.Redirect(w, r, "/edit/" + pageTitle, http.StatusNotFound)
+        return 
+    }
+    renderTemplate("view", w, p)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,8 +49,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
     if err != nil {
         p = &Page{Title: pageTitle}
     }
-    t, _ := template.ParseFiles("edit.html")
-    t.Execute(w, p)
+    renderTemplate("edit", w, p)
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
